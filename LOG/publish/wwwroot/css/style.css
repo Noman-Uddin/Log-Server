@@ -1,0 +1,49 @@
+.card-material {
+    box-shadow: 0 2px 2px 0 rgba(0,0,0,0.16),0 0 0 1px rgba(0,0,0,0.08) !important;
+    transition: box-shadow 400ms cubic-bezier(0.4,0.0,0.2,1) !important;
+}
+
+    .card-material:hover {
+        box-shadow: 0 3px 8px 0 rgba(0,0,0,0.2),0 0 0 1px rgba(0,0,0,0.08) !important;
+    }
+
+.gap {
+    height: 30px;
+}
+
+.dataTables_wrapper {
+    font-family: tahoma;
+    font-size: 11px;
+    direction: ltr;
+    position: relative;
+    clear: both;
+    *zoom: 1;
+    zoom: 1;
+}
+
+.datepickbox {
+    padding-top: 15%;
+}
+
+.blue-gradiant {
+    background-image: linear-gradient(to right, #00A5A8 0%, #4DCBCD 100%);
+}
+
+.red-gradiant {
+    background-image: linear-gradient(to right, #FF6275 0%, #FF9EAC 100%);
+}
+
+.orange-gradiant {
+    background-image: linear-gradient(to right, #FF976A 0%, #FFC2A4 100%);
+}
+
+.green-gradiant {
+    background-image: linear-gradient(to right, #10C888 0%, #5CE0B8 100%);
+}
+
+/* sidebar css */
+.sidebar-card {
+    box-shadow: 0 3px 8px 0 rgba(0,0,0,0.2),0 0 0 1px rgba(0,0,0,0.08);
+    box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.14), 0 1px 5px 0 rgba(0, 0, 0, 0.12), 0 3px 1px -2px rgba(0, 0, 0, 0.2);
+    background-color: rgba(0, 0, 0, 0.04);
+}

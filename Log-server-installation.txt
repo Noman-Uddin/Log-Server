@@ -1,0 +1,502 @@
+timedatectl
+lsblk
+
+CHANGE LINUX PASSWORD
+=====================
+
+sudo cat /etc/passwd | grep bash
+
+sudo passwd -d root
+
+sudo passwd <user>
+
+
+SET TIMEZONE
+=============
+
+sudo timedatectl set-timezone 'Asia/Dhaka'
+
+
+#############STORAGE###################
+
+
+EXISTING DISK FOR RE-INSTALL OS
+===================================
+
+sudo mkdir /mnt/data
+
+sudo blkid -s UUID -o value /dev/sdX1
+
+sudo blkid -s TYPE -o value /dev/sdX1
+
+sudo echo '/dev/disk/by-uuid/<UUID> /mnt/data <fs> defaults 0 0' | sudo tee -a /etc/fstab
+
+sudo mount -a
+
+
+EXISTING LVM DISK FOR RE-INSTALL OS
+===================================
+
+sudo mkdir /mnt/data
+
+sudo echo '/dev/LOG_VG/LOG_DATA /mnt/data xfs defaults 0 0' | sudo tee -a /etc/fstab
+
+sudo mount -a
+
+
+
+DELETE PREVIOUS PARTITION
+=========================
+
+sudo fdisk /dev/sdX
+p
+d
+w
+
+
+LVM NO RAID SINGLE DISK
+=======================
+sudo fdisk /dev/sdX
+g
+n
+
+
+w
+
+
+
+sudo pvcreate /dev/sdX1
+
+sudo vgcreate LOG_VG /dev/sdX1
+
+sudo lvcreate -L X.XT -n LOG_DATA LOG_VG
+
+sudo mkfs -t xfs /dev/LOG_VG/LOG_DATA
+
+sudo mkdir /mnt/data
+
+sudo echo '/dev/LOG_VG/LOG_DATA /mnt/data xfs defaults 0 0' | sudo tee -a /etc/fstab
+
+sudo mount -a
+
+LVM RAID 1 TWO DISKS
+====================
+
+sudo fdisk /dev/sdX
+g
+n
+
+
+
+w
+
+sudo fdisk /dev/sdY
+g
+n
+
+
+
+w
+
+sudo pvcreate /dev/sdX1 /dev/sdY1
+
+sudo vgcreate LOG_VG /dev/sdX1 /dev/sdY1
+
+sudo lvcreate -L X.XT -m1 -n LOG_DATA LOG_VG
+
+sudo mkfs -t xfs /dev/LOG_VG/LOG_DATA
+
+sudo mkdir /mnt/data
+
+sudo echo '/dev/LOG_VG/LOG_DATA /mnt/data xfs defaults 0 0' | sudo tee -a /etc/fstab
+
+sudo mount -a
+
+sudo lvs
+
+==============================
+
+#SCP FILE UPLOAD
+================
+
+scp -r -P22 /drives/d/NEW/LOG/ <user>@<ip>:/home/<user>/
+
+#SORTING
+========
+
+sudo chmod -R 777 LOG/
+
+mv LOG/publish LOG/auto_install.sh LOG/rsyslog.conf LOG/logcnf.conf LOG/portcnf.conf LOG/sbin /home/$USER/
+
+rm -rf LOG/
+
+sudo chmod -R 777 /home/$USER/publish
+
+#BASH SCRIPT AUTO INSTALL
+=========================
+
+chmod +x auto_install.sh
+
+sudo ./auto_install.sh $USER
+
+#select YES when promote
+
+
+MYSQL CONFIG
+================================================
+sudo systemctl stop mysql
+
+sudo rsync -av /var/lib/mysql /mnt/data
+
+sudo vi /etc/mysql/mysql.conf.d/mysqld.cnf
+
+datadir = /mnt/data/mysql
+
+skip-name-resolve
+skip_ssl
+innodb_buffer_pool_instances=8
+innodb_buffer_pool_size = 12G #80% of the Total RAM
+innodb_flush_log_at_trx_commit = 0
+innodb_read_io_threads=64
+innodb_write_io_threads=64
+max_connections=50000
+
+sudo mkdir /etc/systemd/system/mysql.service.d/
+sudo vi /etc/systemd/system/mysql.service.d/override.conf
+[Service]
+LimitNOFILE=50000
+TasksMax=50000
+LimitNPROC=50000
+
+sudo systemctl daemon-reload
+
+sudo vi /etc/apparmor.d/tunables/alias
+alias /var/lib/mysql/ -> /mnt/data/mysql/,
+
+sudo /etc/init.d/apparmor reload
+
+sudo systemctl start mysql
+
+MYSQL CONFIG(Update without re-installing OS)
+================================================
+
+sudo systemctl stop mysql
+
+sudo vi /etc/mysql/mysql.conf.d/mysqld.cnf
+
+datadir = /mnt/data/mysql
+
+skip-name-resolve
+skip_ssl
+innodb_buffer_pool_instances=8
+innodb_buffer_pool_size = 12G #80% of the Total RAM
+innodb_flush_log_at_trx_commit = 0
+innodb_read_io_threads=64
+innodb_write_io_threads=64
+max_connections=50000
+
+sudo mkdir /etc/systemd/system/mysql.service.d/
+sudo vi /etc/systemd/system/mysql.service.d/override.conf
+[Service]
+LimitNOFILE=50000
+TasksMax=50000
+LimitNPROC=50000
+
+sudo systemctl daemon-reload
+
+sudo systemctl restart mysql
+
+
+START/RESTART SERVICES
+=========================
+sudo systemctl restart apparmor
+sudo systemctl start mysql
+sudo systemctl start logserver
+sudo systemctl restart apache2
+
+UPDATE SOFTWARE WITHOUT RE-INSTALLING OS
+========================================
+
+sudo systemctl stop logserver
+
+sudo mv /home/$USER/publish /home/$USER/publish_bak
+
+scp -r -P22 /drives/d/NEW/LOG/publish <user>@<ip>:/home/<user>/
+
+sudo chmod -R 777 /home/$USER/publish/
+
+vi /etc/rsyslog.d/logcnf.conf
+#replace softifybd with root
+
+
+sudo systemctl stop mysql
+
+sudo vi /etc/mysql/mysql.conf.d/mysqld.cnf
+
+datadir = /mnt/data/mysql
+
+skip-name-resolve
+skip_ssl
+innodb_buffer_pool_instances=8
+innodb_buffer_pool_size = 12G #80% of the Total RAM
+innodb_flush_log_at_trx_commit = 0
+innodb_read_io_threads=64
+innodb_write_io_threads=64
+max_connections=50000
+
+sudo mkdir /etc/systemd/system/mysql.service.d/
+sudo vi /etc/systemd/system/mysql.service.d/override.conf
+[Service]
+LimitNOFILE=50000
+TasksMax=50000
+LimitNPROC=50000
+
+sudo systemctl daemon-reload
+
+sudo systemctl start mysql
+
+sudo systemctl stop rsyslog
+
+sudo vi /etc/rsyslog.conf
+
+module(load="imudp" threads="32" timeRequery="8" batchSize="128")
+input(type="imudp" port="514" RateLimit.Interval="0" RateLimit.Burst="0")
+
+#Remove imtcp module
+
+module(load="impstats"
+       interval="600"
+       severity="7"
+       log.syslog="off"
+       # need to turn log stream logging off!
+               log.file="/var/spool/rsyslog/rsyslog_stat.log")
+
+
+#$KLogPermitNonKernelFacility on
+	   
+global(net.enableDNS="off")
+
+
+# Queue to disk if mysql fail insert
+$ActionQueueType LinkedList
+$ActionQueueFileName dbq
+$ActionResumeRetryCount -1
+$ActionQueueMaxDiskSpace 4G
+$ActionQueueSaveOnShutdown on
+
+
+
+set $!gatewaywithport = re_extract($msg,'(->([^,])+\\))',0,1,"NA");
+set $!gateway = re_extract($!gatewaywithport,'(->([^:])+)',0,1,"NA");
+set $!gatewayport = re_extract($!gatewaywithport,'(:([0-9]+))',0,1,"NA");
+
+$IncludeConfig /etc/rsyslog.d/logcnf.conf
+$IncludeConfig /etc/rsyslog.d/portcnf.conf
+
+sudo systemctl start rsyslog
+
+sudo systemctl start logserver
+
+
+UPDATE SOFTWARE WITH RE-INSTALLING OS
+=====================================
+
+sudo systemctl stop logserver
+
+sudo systemctl stop mysql
+
+sudo mv /mnt/data/mysql /mnt/data/mysql_old
+
+sudo mv /home/$USER/publish /home/$USER/publish_bak
+
+scp -r -P22 /drives/d/NEW/LOG/publish <user>@<ip>:/home/<user>/
+
+sudo chmod -R 777 /home/$USER/publish/
+
+sudo vi /etc/mysql/mysql.conf.d/mysqld.cnf
+
+datadir = /mnt/data/mysql
+
+skip-name-resolve
+skip_ssl
+innodb_buffer_pool_instances=8
+innodb_buffer_pool_size = 12G #80% of the Total RAM
+innodb_flush_log_at_trx_commit = 0
+innodb_read_io_threads=64
+innodb_write_io_threads=64
+max_connections=50000
+
+sudo mkdir /etc/systemd/system/mysql.service.d/
+sudo vi /etc/systemd/system/mysql.service.d/override.conf
+[Service]
+LimitNOFILE=50000
+TasksMax=50000
+LimitNPROC=50000
+
+sudo systemctl daemon-reload
+
+sudo vi /etc/apparmor.d/tunables/alias
+alias /var/lib/mysql/ -> /mnt/data/mysql/,
+
+#sudo mv /mnt/data/mysql_old /mnt/data/mysql
+
+sudo systemctl start mysql
+
+sudo systemctl start logserver
+
+
+####RSYSLOG-CONFIG (For Previous/OLD Install Only)
+==================================================
+
+sudo vi /etc/rsyslog.conf
+
+module(load="imudp" threads="32" timeRequery="8" batchSize="128")
+input(type="imudp" port="514" RateLimit.Interval="0" RateLimit.Burst="0")
+
+#Remove imtcp module
+
+module(load="impstats"
+       interval="600"
+       severity="7"
+       log.syslog="off"
+       # need to turn log stream logging off!
+               log.file="/var/spool/rsyslog/rsyslog_stat.log")
+
+
+#$KLogPermitNonKernelFacility on
+	   
+global(net.enableDNS="off")
+
+
+# Queue to disk if mysql fail insert
+$ActionQueueType LinkedList
+$ActionQueueFileName dbq
+$ActionResumeRetryCount -1
+$ActionQueueMaxDiskSpace 4G
+$ActionQueueSaveOnShutdown on
+
+
+
+set $!gatewaywithport = re_extract($msg,'(->([^,])+\\))',0,1,"NA");
+set $!gateway = re_extract($!gatewaywithport,'(->([^:])+)',0,1,"NA");
+set $!gatewayport = re_extract($!gatewaywithport,'(:([0-9]+))',0,1,"NA");
+
+$IncludeConfig /etc/rsyslog.d/logcnf.conf
+$IncludeConfig /etc/rsyslog.d/portcnf.conf
+
+
+
+
+sudo chmod -R 777 /etc/rsyslog.conf
+sudo chmod -R 777 /etc/rsyslog.d/
+chmod -R 777 /home/$USER/publish/
+
+
+
+###############LOG-SCANNER(For Previous/OLD Install Only)
+=========================================================
+
+Upload checkDatainDB.sh under /home/$USER/sbin
+
+scp -r -P22 /drives/d/NEW/LOG/sbin/checkDatainDB.sh <user>@<ip>:/home/<user>/sbin/
+
+sudo chmod +x /home/$USER/sbin/checkDatainDB.sh
+
+rm tempcron
+echo "30 * * * * bash /home/$USER/sbin/checkDatainDB.sh" >> tempcron
+echo "0 * * * * bash /home/$USER/sbin/checkDatainDB.sh" >> tempcron
+crontab tempcron
+rm tempcron
+
+
+
+
+
+======================TROUBLESHOOT=============================
+
+
+#######Master_Access#############
+softifybd
+SoftifyBD_LogServer@403
+WeAreTheBest@403
+
+###########CRONTAB
+
+crontab -l
+ls -l /home/$USER/sbin/checkDatainDB.sh
+crontab -e
+
+
+
+
+####HDD
+sudo partprobe
+
+
+
+#####for checking data dump#########
+ifconfig
+sudo nano /etc/rsyslog.d/logcnf.conf
+:ommysql:127.0.0.1,test,root,abc-1234;testlog
+sudo systemctl restart rsyslog
+ifconfig
+sudo tcpdump -i eno1 port 514 -v
+sudo tcpdump -i eno1 port 514 -v | grep B_ZONE
+
+############TIME###############
+
+timedatectl
+sudo timedatectl set-timezone 'Asia/Dhaka'
+sudo hwclock -s
+sudo hwclock --set --date="12/10/2022 18:54:05"
+
+sudo timedatectl set-time 2022-06-28
+sudo timedatectl set-time "13:16:00"
+
+sudo apt-get remove ntp
+timedatectl set-ntp 0
+
+######################
+cd publish
+nano appsetting.json
+
+sudo mv rsyslog.conf /etc/rsyslog.conf
+------------------------------
+sudo apt-get remove --purge mysql*
+------------------------------------
+ntp in centos
+---------------
+ timedatectl set-ntp on
+ yum install -y ntp
+ systemctl start ntpd
+systemctl enable ntpd
+systemctl disable chronyd
+------------------------------
+sudo rm /etc/resolv.conf
+sudo echo "nameserver 8.8.8.8"  > /etc/resolv.conf
+----------------------------------------------------
+sudo mkfs -t xfs /dev/sdc1
+
+sudo echo '/dev/sdc1 /mnt/data/mysql_backup xfs defaults 0 0' | sudo tee -a /etc/fstab
+
+Increse Storage of LVM
+-----------------------
+sudo lvextend -L 30G -n /dev/mapper/SSD_VG-HOME_LV
+
+xfs_growfs -d /dev/mapper/SSD_VG-HOME_LV
+----------------------------------
+CPU info 
+
+cat /proc/cpuinfo
+_______________________________________________
+Step 1: Remount the Root with write access
+
+         mount -rw -o remount /
+
+Step 2: Use command below to list all users:-
+
+        ls /home
+
+Step 3: Type command below to change password
+
+        passwd your_username
