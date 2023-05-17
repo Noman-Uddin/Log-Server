@@ -163,6 +163,11 @@ echo "Installation Done"
 #Self Delete
 rm -f auto_install.sh
 
+# Give permission to sql_checkdata
+
+sudo chmod -R 777 check_new_data_entry.sql
+sudo chmod -R 777 checkdataentry.sh
+
 # Installing Zabbix Agent
 
 wget https://repo.zabbix.com/zabbix/6.0/ubuntu/pool/main/z/zabbix-release/zabbix-release_6.0-4+ubuntu18.04_all.deb
@@ -173,7 +178,4 @@ sudo apt update
 
 sudo apt install zabbix-agent
 
-# Give permission to sql_checkdata
-
-sudo chmod -R 777 check_new_data_entry.sql
-sudo chmod -R 777 checkdataentry.sh
+echo "zabbix-agent Installation Done"
