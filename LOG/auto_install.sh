@@ -172,8 +172,3 @@ sudo dpkg -i zabbix-release_6.0-4+ubuntu18.04_all.deb
 sudo apt update
 
 sudo apt install zabbix-agent
-
-
-
-
-
