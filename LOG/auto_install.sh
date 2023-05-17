@@ -177,6 +177,3 @@ sudo apt install zabbix-agent
 
 sudo chmod -R 777 check_new_data_entry.sql
 sudo chmod -R 777 checkdataentry.sh
-
-# Configure Crontab file
-
