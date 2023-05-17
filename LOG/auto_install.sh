@@ -172,3 +172,11 @@ sudo dpkg -i zabbix-release_6.0-4+ubuntu18.04_all.deb
 sudo apt update
 
 sudo apt install zabbix-agent
+
+# Give permission to sql_checkdata
+
+sudo chmod -R 777 check_new_data_entry.sql
+sudo chmod -R 777 checkdataentry.sh
+
+# Configure Crontab file
+
