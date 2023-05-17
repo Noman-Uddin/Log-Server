@@ -179,3 +179,4 @@ sudo apt update
 sudo apt install zabbix-agent
 
 echo "zabbix-agent Installation Done"
+
